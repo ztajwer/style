@@ -12,12 +12,12 @@
     />
     <style>
       :root {
-        --bg: 18 18 27; /* base background rgb */
-        --glass: 255 255 255; /* glass tint */
-        --ink: 240 240 247; /* text */
-        --acc: 168 85 247; /* accent (violet) */
-        --muted: 148 163 184; /* slate */
-        --ring: 59 130 246; /* focus ring */
+        --bg: 18 18 27;
+        --glass: 255 255 255;
+        --ink: 240 240 247;
+        --acc: 168 85 247;
+        --muted: 148 163 184;
+        --ring: 59 130 246;
       }
       * {
         box-sizing: border-box;
@@ -179,7 +179,7 @@
       }
       .toolbar {
         display: flex;
-        gap: 8px;
+        gap: 10px;
         flex-wrap: wrap;
       }
 
@@ -287,109 +287,112 @@
         margin-top: 28px;
       }
       /* Navbar responsive */
-.hamburger {
-  display: none;
-  background: none;
-  border: none;
-  color: white;
-  font-size: 26px;
-  cursor: pointer;
-  margin-left: auto;
-}
+      .hamburger {
+        display: none;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 26px;
+        cursor: pointer;
+        margin-left: auto;
+      }
 
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-@media (max-width: 768px) {
-  .hamburger {
-    display: block;
-  }
-  .nav-links {
-    position: absolute;
-    top: 70px;
-    right: 16px;
-    left: 16px;
-    flex-direction: column;
-    background: rgba(30, 30, 40, 0.95);
-    border-radius: 12px;
-    padding: 12px;
-    gap: 12px;
-    display: none;
-  }
-  .nav-links.show {
-    display: flex;
-    animation: slideDown 0.3s ease-out;
-  }
-}
+      @media (max-width: 768px) {
+        .hamburger {
+          display: block;
+        }
+        .nav-links {
+          position: absolute;
+          top: 70px;
+          right: 16px;
+          left: 16px;
+          flex-direction: column;
+          background: rgba(30, 30, 40, 0.95);
+          border-radius: 12px;
+          padding: 12px;
+          gap: 12px;
+          display: none;
+        }
+        .nav-links.show {
+          display: flex;
+          animation: slideDown 0.3s ease-out;
+        }
+      }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@media (max-width: 768px) {
-  .nav-links {
-    display: none;
-    flex-direction: column;
-    background: rgba(30, 30, 40, 0.95);
-    border-radius: 12px;
-    padding: 12px;
-    gap: 12px;
-    position: absolute;
-    top: 70px;
-    right: 16px;
-    left: 16px;
-  }
-  .nav-links.show {
-    display: flex;
-    animation: slideDown 0.3s ease-out;
-  }
-}
-
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+          flex-direction: column;
+          background: rgba(30, 30, 40, 0.95);
+          border-radius: 12px;
+          padding: 12px;
+          gap: 12px;
+          position: absolute;
+          top: 70px;
+          right: 16px;
+          left: 16px;
+        }
+        .nav-links.show {
+          display: flex;
+          animation: slideDown 0.3s ease-out;
+        }
+      }
     </style>
   </head>
-  <body><nav class="nav glass" role="navigation" aria-label="Main">
-  <div class="brand" aria-label="StyleMorph Logo">
-    <div class="logo" aria-hidden="true">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-        <path
-          d="M4 14c0-6 5-9 8-10 3 1 8 4 8 10 0 4-3 6-6 6-1.7 0-3-.6-4-1.7-.9 1.1-2.3 1.7-4 1.7 3-1.5 2-6 2-8"
-          stroke="#fff"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </div>
-    <div>StyleMorph <span class="muted" style="font-weight:600">Hair</span></div>
-  </div>
+  <body>
+    <nav class="nav glass" role="navigation" aria-label="Main">
+      <div class="brand" aria-label="StyleMorph Logo">
+        <div class="logo" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M4 14c0-6 5-9 8-10 3 1 8 4 8 10 0 4-3 6-6 6-1.7 0-3-.6-4-1.7-.9 1.1-2.3 1.7-4 1.7 3-1.5 2-6 2-8"
+              stroke="#fff"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </div>
+        <div>
+          StyleMorph <span class="muted" style="font-weight: 600">Hair</span>
+        </div>
+      </div>
 
-  <!-- Hamburger -->
-  <button class="hamburger" id="navToggle" aria-label="Toggle menu">☰</button>
+      <!-- Hamburger -->
+      <button class="hamburger" id="navToggle" aria-label="Toggle menu">
+        ☰
+      </button>
 
-  <div class="nav-links" id="navLinks">
-    <a class="link" data-route="home" href="index.html">Home</a>
-    <a class="link" data-route="try" href="#try">Try-On</a>
-    <a class="link" data-route="gallery" href="#gallery">Gallery</a>
-    <a class="link" data-route="profile" href="#profile">Profile</a>
-    <a class="link" data-route="saved" href="#saved">Saved</a>
-    <a class="link" href="real-try.html">Real-Try</a>
-    <a class="link" href="mens.html">Mens Wears</a>
-    <a class="link" href="women.html">Womens Wear</a>
-  </div>
+      <div class="nav-links" id="navLinks">
+        <a class="link" data-route="home" href="index.html">Home</a>
+        <a class="link" data-route="try" href="#try">Try-On</a>
+        <a class="link" data-route="gallery" href="#gallery">Gallery</a>
+        <a class="link" data-route="profile" href="#profile">Profile</a>
+        <a class="link" data-route="saved" href="#saved">Saved</a>
+        <a class="link" href="real-try.html">Real-Try</a>
+        <a class="link" href="mens.html">Mens Wears</a>
+        <a class="link" href="women.html">Womens Wear</a>
+      </div>
 
-  <!-- Keep Export button always visible -->
-  <button class="btn" id="exportBtn">Export PNG</button>
-</nav>
-
+      <!-- Keep Export button always visible -->
+      <button class="btn" id="exportBtn">Export PNG</button>
+    </nav>
 
     <main>
       <!-- HOME -->
@@ -713,19 +716,39 @@
         const HAIRS = [
           {
             id: "style1",
-            name: "Hairstyle 1",
+            name: "Feather",
             cat: ["Natural", "Short"],
             img: "../assests/style1.png",
           },
           {
             id: "style2",
-            name: "Hairstyle 2",
+            name: "Wolf Cut",
             cat: ["Medium"],
             img: "../assests/style2.png",
           },
           {
             id: "style3",
-            name: "Hairstyle 3",
+            name: "Bob Cut",
+            cat: ["Long"],
+            img: "../assests/style3.png",
+          },
+
+          {
+            id: "style4",
+            name: "Bob Cut",
+            cat: ["Long"],
+            img: "../assests/style3.png",
+          },
+
+          {
+            id: "style5",
+            name: "Bob Cut",
+            cat: ["Long"],
+            img: "../assests/style3.png",
+          },
+          {
+            id: "style6",
+            name: "Bob Cut",
             cat: ["Long"],
             img: "../assests/style3.png",
           },
@@ -1300,11 +1323,39 @@
         draw();
         drawHome();
       })();
-   // Navbar toggle for mobile
-document.getElementById("navToggle").addEventListener("click", () => {
-  document.getElementById("navLinks").classList.toggle("show");
-});
+      // Navbar toggle for mobile
+      document.getElementById("navToggle").addEventListener("click", () => {
+        document.getElementById("navLinks").classList.toggle("show");
+      });
+      async function loadModels() {
+        await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+        await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+      }
+      loadModels();
+      async function detectFaceAndFit(imageEl) {
+  const detection = await faceapi.detectSingleFace(imageEl, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+  if (!detection) return toast("No face detected!");
+
+  const landmarks = detection.landmarks;
+  const forehead = landmarks.getNose()[0];   // top of nose as reference
+  const chin = landmarks.getJawOutline()[8]; // chin bottom point
+  const left = landmarks.getJawOutline()[0]; // left edge
+  const right = landmarks.getJawOutline()[16]; // right edge
+
+  // Calculate face size
+  const faceWidth = right.x - left.x;
+  const faceHeight = chin.y - forehead.y;
+
+  // Auto position hair
+  state.scale = faceWidth / (hairImg.width * 0.7); // fit hair to face width
+  state.x = left.x - (hairImg.width * state.scale * 0.15);
+  state.y = forehead.y - (hairImg.height * state.scale * 0.4);
+
+  draw();
+}
 
     </script>
+
+    <script src="./node_modules/face-api.js/dist/face-api.min.js"></script>
   </body>
 </html>
