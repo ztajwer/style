@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hair Gallery - StyleMorph</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364); /* same gradient as home */
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: rgba(0,0,0,0.6);
+      padding: 15px 30px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: gold;
+    }
+
+    .gallery {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      padding: 40px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    .card img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+    }
+
+    .card h3 {
+      margin: 15px 0;
+      font-size: 20px;
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+
+  <header>✨ Hair Gallery ✨</header>
+
+  <div class="gallery" id="gallery"></div>
+  <img src="assests/style1.png" alt="">
+
+  <script>
+    const HAIRS = [
+      { name:"Short Natural", img:"assests/style1.png" },
+      { name:"Classic Bob",   img:"assests/style2.png" },
+      { name:"Long Bob",      img:"assests/style3.png" },
+      { name:"Curly Volume",  img:"assests/style1.png" },
+      { name:"Long Waves",    img:"assests/style2.png" },
+      { name:"Bold Color",    img:"assests/style3.png" },
+    ];
+
+    const gallery = document.getElementById("gallery");
+    gallery.innerHTML = HAIRS.map(hair => `
+      <div class="card">
+        <img src="${hair.img}" alt="${hair.name}">
+        <h3>${hair.name}</h3>
+      </div>
+    `).join("");
+  </script>
+
+</body>
+</html>

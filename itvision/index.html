@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>StyleMorph — Hair Try‑On (Vanilla JS)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: 18 18 27; /* base background rgb */
+        --glass: 255 255 255; /* glass tint */
+        --ink: 240 240 247; /* text */
+        --acc: 168 85 247; /* accent (violet) */
+        --muted: 148 163 184; /* slate */
+        --ring: 59 130 246; /* focus ring */
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto,
+          sans-serif;
+        color: rgb(var(--ink));
+        background: radial-gradient(
+            80vmax 60vmax at 10% 10%,
+            #5b21b6 0%,
+            transparent 60%
+          ),
+          radial-gradient(80vmax 60vmax at 90% 20%, #e11d48 0%, transparent 60%),
+          rgb(var(--bg));
+        overflow-x: hidden;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button {
+        font: inherit;
+      }
+
+      /* Glass cards */
+      .glass {
+        background: color-mix(
+          in srgb,
+          rgba(var(--glass), 0.06) 80%,
+          transparent
+        );
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(12px) saturate(120%);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 18px;
+      }
+      .ghost {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+      }
+
+      /* Navbar */
+      .nav {
+        position: fixed;
+        inset: 16px 16px auto 16px;
+        height: 64px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+      }
+      .brand .logo {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0ea5e9, #a855f7);
+        box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25),
+          0 8px 18px rgba(0, 0, 0, 0.35);
+      }
+      .brand .logo svg {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+      }
+      .nav a.link {
+        padding: 10px 12px;
+        border-radius: 12px;
+        color: rgb(var(--muted));
+        font-weight: 600;
+      }
+      .nav a.link.active,
+      .nav a.link:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.07);
+      }
+      .spacer {
+        flex: 1;
+      }
+      .btn {
+        padding: 10px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        color: white;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      main {
+        padding: 120px 24px 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 44px);
+        margin: 0 0 12px;
+      }
+      h2 {
+        font-size: clamp(22px, 3vw, 30px);
+        margin: 0 0 10px;
+      }
+      p.lead {
+        color: rgb(var(--muted));
+        max-width: 80ch;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .grid.cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .grid.cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      @media (max-width: 900px) {
+        .grid.cols-3,
+        .grid.cols-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 640px) {
+        .grid.cols-3,
+        .grid.cols-4 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        padding: 16px;
+      }
+      .muted {
+        color: rgb(var(--muted));
+      }
+      .pill {
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      /* Try-on canvas area */
+      .stage {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 3/4;
+        overflow: hidden;
+        border-radius: 16px;
+        background: repeating-conic-gradient(
+            from 45deg,
+            rgba(255, 255, 255, 0.05) 0 10deg,
+            transparent 10deg 20deg
+          ),
+          rgba(255, 255, 255, 0.03);
+        display: grid;
+        place-items: center;
+      }
+      .stage canvas {
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .controls label {
+        display: block;
+        font-size: 12px;
+        color: rgb(var(--muted));
+        margin-bottom: 4px;
+      }
+      .controls input[type="range"] {
+        width: 100%;
+      }
+      .controls .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .gallery-item {
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .gallery-item:hover {
+        outline: 2px solid rgba(255, 255, 255, 0.25);
+      }
+      .gallery-thumb {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1/1;
+        background: rgba(0, 0, 0, 0.25);
+        display: grid;
+        place-items: center;
+      }
+      .gallery-thumb img {
+        max-width: 90%;
+        max-height: 90%;
+      }
+      .gallery-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+      }
+
+      .upload {
+        border: 2px dashed rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .upload.drag {
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.5);
+      }
+
+      .toast {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .foot {
+        opacity: 0.7;
+        font-size: 12px;
+        text-align: center;
+        margin-top: 28px;
+      }
+      /* Navbar responsive */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 26px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .hamburger {
+    display: block;
+  }
+  .nav-links {
+    position: absolute;
+    top: 70px;
+    right: 16px;
+    left: 16px;
+    flex-direction: column;
+    background: rgba(30, 30, 40, 0.95);
+    border-radius: 12px;
+    padding: 12px;
+    gap: 12px;
+    display: none;
+  }
+  .nav-links.show {
+    display: flex;
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    background: rgba(30, 30, 40, 0.95);
+    border-radius: 12px;
+    padding: 12px;
+    gap: 12px;
+    position: absolute;
+    top: 70px;
+    right: 16px;
+    left: 16px;
+  }
+  .nav-links.show {
+    display: flex;
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+    </style>
+  </head>
+  <body><nav class="nav glass" role="navigation" aria-label="Main">
+  <div class="brand" aria-label="StyleMorph Logo">
+    <div class="logo" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M4 14c0-6 5-9 8-10 3 1 8 4 8 10 0 4-3 6-6 6-1.7 0-3-.6-4-1.7-.9 1.1-2.3 1.7-4 1.7 3-1.5 2-6 2-8"
+          stroke="#fff"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
+    <div>StyleMorph <span class="muted" style="font-weight:600">Hair</span></div>
+  </div>
+
+  <!-- Hamburger -->
+  <button class="hamburger" id="navToggle" aria-label="Toggle menu">☰</button>
+
+  <div class="nav-links" id="navLinks">
+    <a class="link" data-route="home" href="index.html">Home</a>
+    <a class="link" data-route="try" href="#try">Try-On</a>
+    <a class="link" data-route="gallery" href="#gallery">Gallery</a>
+    <a class="link" data-route="profile" href="#profile">Profile</a>
+    <a class="link" data-route="saved" href="#saved">Saved</a>
+    <a class="link" href="real-try.html">Real-Try</a>
+    <a class="link" href="mens.html">Mens Wears</a>
+    <a class="link" href="women.html">Womens Wear</a>
+  </div>
+
+  <!-- Keep Export button always visible -->
+  <button class="btn" id="exportBtn">Export PNG</button>
+</nav>
+
+
+    <main>
+      <!-- HOME -->
+      <section id="home" class="view">
+        <div class="glass card">
+          <h1>Try hairstyles instantly — no apps, no signup.</h1>
+          <p class="lead">
+            Upload your photo, pick a style, then drag, scale, and rotate until
+            it fits. Our transparent, shadowed UI keeps the focus on your face.
+            Everything runs locally in your browser (HTML/CSS/JS only).
+          </p>
+          <div class="toolbar" style="margin-top: 12px">
+            <span class="pill">Responsive</span>
+            <span class="pill">Secure uploads</span>
+            <span class="pill">Local saves</span>
+            <span class="pill">Zoomable styles</span>
+          </div>
+        </div>
+
+        <div class="grid cols-3" style="margin-top: 16px">
+          <div class="glass card">
+            <h2>1) Upload your photo</h2>
+            <p class="muted">
+              Face centered, neutral lighting. PNG/JPG/WebP up to 10MB.
+            </p>
+            <div
+              class="upload"
+              id="uploadBox"
+              tabindex="0"
+              aria-label="Upload your face photo by clicking or dragging a file here"
+            >
+              <input
+                class="sr-only"
+                type="file"
+                id="fileInput"
+                accept="image/png,image/jpeg,image/webp"
+              />
+              <p>
+                Drag & drop here or
+                <button class="btn" id="browseBtn" type="button">Browse</button>
+              </p>
+              <p class="muted" id="uploadMsg"></p>
+            </div>
+          </div>
+          <div class="glass card">
+            <h2>2) Choose a hairstyle</h2>
+            <p class="muted">
+              Browse categories like Short, Medium, Long, Curly, Color. Click
+              any style to send it to Try‑On.
+            </p>
+            <div class="toolbar" id="catBar"></div>
+            <div
+              class="grid cols-4"
+              id="miniGallery"
+              style="margin-top: 12px"
+            ></div>
+          </div>
+          <div class="glass card">
+            <h2>3) Fit it on you</h2>
+            <p class="muted">
+              Drag to move · Shift+Drag to rotate · Mouse wheel / pinch to scale
+              · R to reset. Use sliders for fine control. Click Export to save
+              PNG.
+            </p>
+            <div class="stage" id="stageHome">
+              <canvas
+                id="canvasHome"
+                width="900"
+                height="1200"
+                aria-label="Preview canvas"
+              ></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRY-ON -->
+      <section id="try" class="view" hidden>
+        <div class="grid cols-3">
+          <div class="glass card">
+            <h2>Your Photo</h2>
+            <div
+              class="upload"
+              id="uploadBox2"
+              tabindex="0"
+              aria-label="Upload your face photo by clicking or dragging a file here (secondary)"
+            >
+              <input
+                class="sr-only"
+                type="file"
+                id="fileInput2"
+                accept="image/png,image/jpeg,image/webp"
+              />
+              <p>
+                Drag & drop here or
+                <button class="btn" id="browseBtn2" type="button">
+                  Browse
+                </button>
+              </p>
+              <p class="muted" id="uploadMsg2"></p>
+            </div>
+            <div class="ghost" style="padding: 12px; margin-top: 12px">
+              <p class="muted" style="margin: 0">
+                Tips: Face should be upright. Use the scale slider to match hair
+                width to your head, then nudge with arrow keys for pixel-perfect
+                alignment.
+              </p>
+            </div>
+          </div>
+          <div class="glass card" style="grid-column: span 2">
+            <h2>Try‑On Stage</h2>
+            <div class="stage" id="stage">
+              <canvas
+                id="canvas"
+                width="900"
+                height="1200"
+                aria-live="polite"
+              ></canvas>
+            </div>
+            <div class="controls" style="margin-top: 12px">
+              <div class="row">
+                <div>
+                  <label for="scale">Scale</label>
+                  <input
+                    type="range"
+                    id="scale"
+                    min="0.2"
+                    max="3"
+                    step="0.01"
+                    value="1"
+                  />
+                </div>
+                <div>
+                  <label for="rotation">Rotation (°)</label>
+                  <input
+                    type="range"
+                    id="rotation"
+                    min="-45"
+                    max="45"
+                    step="0.1"
+                    value="0"
+                  />
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label for="x">X Offset</label>
+                  <input
+                    type="range"
+                    id="x"
+                    min="-400"
+                    max="400"
+                    step="1"
+                    value="0"
+                  />
+                </div>
+                <div>
+                  <label for="y">Y Offset</label>
+                  <input
+                    type="range"
+                    id="y"
+                    min="-400"
+                    max="400"
+                    step="1"
+                    value="0"
+                  />
+                </div>
+              </div>
+              <div class="toolbar" style="margin-top: 8px">
+                <button class="btn" id="resetBtn" type="button">Reset</button>
+                <button
+                  class="btn"
+                  id="saveBtn"
+                  type="button"
+                  title="Save this look locally"
+                >
+                  Save Look
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GALLERY -->
+      <section id="gallery" class="view" hidden>
+        <div class="glass card">
+          <h2>Hairstyle Gallery</h2>
+          <p class="muted">
+            Click a style to try. Use categories to filter. Images are
+            transparent PNG/SVG so they layer naturally over photos.
+          </p>
+          <div class="toolbar" id="catBar2" style="margin-bottom: 12px"></div>
+          <div class="grid cols-4" id="fullGallery"></div>
+        </div>
+      </section>
+
+      <!-- PROFILE -->
+      <section id="profile" class="view" hidden>
+        <div class="grid cols-3">
+          <div class="glass card">
+            <h2>Your Profile</h2>
+            <p class="muted">
+              Optional — helps with quick size hints (hair width guideline).
+            </p>
+            <label
+              >Name<br /><input
+                id="name"
+                class="ghost"
+                style="
+                  width: 100%;
+                  padding: 10px;
+                  color: white;
+                  background: rgba(255, 255, 255, 0.06);
+                  border-radius: 10px;
+                  border: 1px solid rgba(255, 255, 255, 0.12);
+                "
+                placeholder="Your name"
+            /></label>
+            <div class="grid cols-3" style="margin-top: 10px">
+              <label
+                >Head Width (cm)<br /><input
+                  id="headW"
+                  type="number"
+                  class="ghost"
+                  style="
+                    width: 100%;
+                    padding: 10px;
+                    color: white;
+                    background: rgba(255, 255, 255, 0.06);
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                  "
+                  placeholder="14"
+              /></label>
+              <label
+                >Hairline to Chin (cm)<br /><input
+                  id="faceH"
+                  type="number"
+                  class="ghost"
+                  style="
+                    width: 100%;
+                    padding: 10px;
+                    color: white;
+                    background: rgba(255, 255, 255, 0.06);
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                  "
+                  placeholder="18"
+              /></label>
+              <label
+                >Preference<br />
+                <select
+                  id="pref"
+                  class="ghost"
+                  style="
+                    width: 100%;
+                    padding: 10px;
+                    color: white;
+                    background: rgba(255, 255, 255, 0.06);
+                    border-radius: 10px;
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                  "
+                >
+                  <option>Natural</option>
+                  <option>Bold</option>
+                  <option>Color</option>
+                  <option>Curly</option>
+                </select>
+              </label>
+            </div>
+            <button class="btn" id="saveProfile" style="margin-top: 12px">
+              Save Profile
+            </button>
+            <p class="muted" id="sizeHint" style="margin-top: 8px"></p>
+          </div>
+          <div class="glass card" style="grid-column: span 2">
+            <h2>Tips for Realistic Fit</h2>
+            <ul class="muted">
+              <li>Match hair width to your head’s widest point.</li>
+              <li>
+                Lift or lower along Y until the hairline aligns with your
+                natural hairline.
+              </li>
+              <li>Use slight rotation to follow face tilt.</li>
+              <li>
+                Prefer PNG/SVG styles to preserve transparency and soft edges.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SAVED LOOKS -->
+      <section id="saved" class="view" hidden>
+        <div class="glass card">
+          <h2>Saved Looks</h2>
+          <p class="muted">
+            Your looks are stored locally on this device. Click any to load back
+            to Try‑On.
+          </p>
+          <div class="grid cols-4" id="savedGrid"></div>
+        </div>
+      </section>
+
+      <p class="foot muted">
+        Built with pure HTML, CSS, and JavaScript. No frameworks, no servers.
+        All processing happens in your browser.
+      </p>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script>
+      (function () {
+        /* -------------------------- Data & Assets -------------------------- */
+        const MAX_MB = 10;
+        const TYPES = ["image/png", "image/jpeg", "image/webp"];
+
+        // Direct hairstyle image assets
+        const HAIRS = [
+          {
+            id: "style1",
+            name: "Hairstyle 1",
+            cat: ["Natural", "Short"],
+            img: "../assests/style1.png",
+          },
+          {
+            id: "style2",
+            name: "Hairstyle 2",
+            cat: ["Medium"],
+            img: "../assests/style2.png",
+          },
+          {
+            id: "style3",
+            name: "Hairstyle 3",
+            cat: ["Long"],
+            img: "../assests/style3.png",
+          },
+        ];
+        const CATS = [
+          "All",
+          "Short",
+          "Medium",
+          "Long",
+          "Curly",
+          "Color",
+          "Natural",
+          "Office",
+          "Party",
+        ];
+
+        function getHairDataURL(h) {
+          return h.img; // just return image path
+        }
+
+        /* ------------------------- State & Elements ------------------------ */
+        const views = {
+          home: document.getElementById("home"),
+          try: document.getElementById("try"),
+          gallery: document.getElementById("gallery"),
+          profile: document.getElementById("profile"),
+          saved: document.getElementById("saved"),
+        };
+        const navLinks = [...document.querySelectorAll(".nav a.link")];
+        function setRoute(hash) {
+          const r = (hash || "#home").replace("#", "");
+          Object.values(views).forEach((v) => (v.hidden = true));
+          (views[r] || views.home).hidden = false;
+          navLinks.forEach((a) =>
+            a.classList.toggle("active", a.dataset.route === r)
+          );
+        }
+        window.addEventListener("hashchange", () => setRoute(location.hash));
+        setRoute(location.hash);
+
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const canvasHome = document.getElementById("canvasHome");
+        const ctxHome = canvasHome.getContext("2d");
+
+        let userImg = null; // HTMLImageElement
+        let hairImg = null; // HTMLImageElement
+
+        const state = {
+          x: 0,
+          y: 0,
+          scale: 1,
+          rot: 0,
+        };
+
+        const sliders = {
+          x: document.getElementById("x"),
+          y: document.getElementById("y"),
+          scale: document.getElementById("scale"),
+          rotation: document.getElementById("rotation"),
+        };
+
+        function toast(msg) {
+          const el = document.getElementById("toast");
+          el.textContent = msg;
+          el.hidden = false;
+          clearTimeout(el._t);
+          el._t = setTimeout(() => {
+            el.hidden = true;
+          }, 2200);
+        }
+
+        /* ------------------------- Upload Handling ------------------------- */
+        function validateFile(file) {
+          if (!TYPES.includes(file.type))
+            throw new Error("Only PNG, JPG, or WEBP allowed.");
+          const mb = file.size / 1024 / 1024;
+          if (mb > MAX_MB)
+            throw new Error(`Max ${MAX_MB}MB. Yours: ${mb.toFixed(1)}MB`);
+        }
+        async function readAsDataURL(file) {
+          validateFile(file);
+          return await new Promise((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(r.result);
+            r.onerror = rej;
+            r.readAsDataURL(file);
+          });
+        }
+        async function loadImage(src) {
+          return await new Promise((res, rej) => {
+            const i = new Image();
+            i.onload = () => res(i);
+            i.onerror = rej;
+            i.src = src;
+          });
+        }
+
+        function setupUpload(boxId, inputId, msgId, browseId) {
+          const box = document.getElementById(boxId);
+          const input = document.getElementById(inputId);
+          const msg = document.getElementById(msgId);
+          const browse = document.getElementById(browseId);
+
+          browse.addEventListener("click", () => input.click());
+          box.addEventListener("click", (e) => {
+            if (e.target === box) input.click();
+          });
+
+          box.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            box.classList.add("drag");
+          });
+          box.addEventListener("dragleave", () => box.classList.remove("drag"));
+          box.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            box.classList.remove("drag");
+            const f = e.dataTransfer.files?.[0];
+            if (!f) return;
+            try {
+              const url = await readAsDataURL(f);
+              await setUserImage(url);
+              msg.textContent = f.name;
+              toast("Photo loaded");
+            } catch (err) {
+              msg.textContent = err.message;
+              toast(err.message);
+            }
+          });
+
+          input.addEventListener("change", async () => {
+            const f = input.files?.[0];
+            if (!f) return;
+            try {
+              const url = await readAsDataURL(f);
+              await setUserImage(url);
+              msg.textContent = f.name;
+              toast("Photo loaded");
+            } catch (err) {
+              msg.textContent = err.message;
+              toast(err.message);
+            }
+          });
+        }
+
+        setupUpload("uploadBox", "fileInput", "uploadMsg", "browseBtn");
+        setupUpload("uploadBox2", "fileInput2", "uploadMsg2", "browseBtn2");
+
+        async function setUserImage(dataURL) {
+          userImg = await loadImage(dataURL);
+          fitStage();
+          draw();
+          drawHome();
+        }
+
+        async function setHairById(id) {
+          const item = HAIRS.find((h) => h.id === id);
+          if (!item) return;
+          const url = getHairDataURL(item);
+          hairImg = await loadImage(url);
+          state.scale = 1;
+          state.rot = 0;
+          state.x = 0;
+          state.y = -120;
+          sliders.scale.value = state.scale;
+          sliders.rotation.value = state.rot;
+          sliders.x.value = state.x;
+          sliders.y.value = state.y;
+          draw();
+          drawHome();
+          toast(`${item.name} added to stage`);
+          location.hash = "#try";
+        }
+
+        /* ---------------------------- Gallery UI --------------------------- */
+        function renderCats(barId) {
+          const bar = document.getElementById(barId);
+          bar.innerHTML = "";
+          CATS.forEach((c) => {
+            const b = document.createElement("button");
+            b.className = "btn";
+            b.textContent = c;
+            b.dataset.cat = c;
+            b.addEventListener("click", () => {
+              document
+                .querySelectorAll(`[data-catbar='${barId}'] .btn`)
+                .forEach((x) => x.classList.remove("active"));
+              b.classList.add("active");
+              renderGallery(
+                barId === "catBar" ? "miniGallery" : "fullGallery",
+                c
+              );
+            });
+            bar.appendChild(b);
+          });
+          bar.setAttribute("data-catbar", barId);
+        }
+
+        function renderGallery(gridId, filter = "All") {
+          const grid = document.getElementById(gridId);
+          grid.innerHTML = "";
+          const list = HAIRS.filter(
+            (h) => filter === "All" || h.cat.includes(filter)
+          );
+          list.forEach((h) => {
+            const card = document.createElement("div");
+            card.className = "gallery-item glass card";
+            const thumb = document.createElement("div");
+            thumb.className = "gallery-thumb";
+            const img = document.createElement("img");
+            img.alt = h.name;
+            img.loading = "lazy";
+            img.src = getHairDataURL(h);
+            thumb.appendChild(img);
+            const meta = document.createElement("div");
+            meta.className = "gallery-meta";
+            meta.innerHTML = `<span>${h.name}</span><span class='pill'>${h.cat[0]}</span>`;
+            card.appendChild(thumb);
+            card.appendChild(meta);
+            card.addEventListener("click", () => setHairById(h.id));
+            grid.appendChild(card);
+          });
+        }
+
+        renderCats("catBar");
+        renderGallery("miniGallery");
+        renderCats("catBar2");
+        renderGallery("fullGallery");
+
+        /* ---------------------------- Drawing ------------------------------ */
+        function fitStage() {}
+        function clear(ctx) {
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        }
+        function drawBase(ctx) {
+          const { width: w, height: h } = ctx.canvas;
+          const size = 40;
+          ctx.save();
+          for (let y = 0; y < h; y += size) {
+            for (let x = 0; x < w; x += size) {
+              ctx.fillStyle =
+                (x / size + y / size) % 2 === 0
+                  ? "rgba(255,255,255,0.04)"
+                  : "rgba(0,0,0,0.08)";
+              ctx.fillRect(x, y, size, size);
+            }
+          }
+          ctx.restore();
+        }
+        function drawTo(ctx) {
+          clear(ctx);
+          drawBase(ctx);
+          const W = ctx.canvas.width,
+            H = ctx.canvas.height;
+          if (userImg) {
+            const r = Math.min(W / userImg.width, H / userImg.height);
+            const iw = userImg.width * r,
+              ih = userImg.height * r;
+            const ix = (W - iw) / 2,
+              iy = (H - ih) / 2;
+            ctx.drawImage(userImg, ix, iy, iw, ih);
+            ctx.strokeStyle = "rgba(255,255,255,0.25)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(20, iy + ih * 0.28);
+            ctx.lineTo(W - 20, iy + ih * 0.28);
+            ctx.stroke();
+          }
+          if (hairImg) {
+            ctx.save();
+            const centerX = W / 2 + state.x;
+            const centerY = H / 2 + state.y - 200;
+            ctx.translate(centerX, centerY);
+            ctx.rotate((state.rot * Math.PI) / 180);
+            const baseW = 700;
+            const baseH = 700;
+            const s = state.scale;
+            ctx.drawImage(
+              hairImg,
+              (-baseW * s) / 2,
+              (-baseH * s) / 2,
+              baseW * s,
+              baseH * s
+            );
+            ctx.restore();
+          }
+        }
+        function draw() {
+          drawTo(ctx);
+        }
+        function drawHome() {
+          drawTo(ctxHome);
+        }
+
+        /* ----------------------- Pointer Interactions ---------------------- */
+        let dragging = false,
+          rotating = false;
+        let startX = 0,
+          startY = 0,
+          startState = { x: 0, y: 0, rot: 0 };
+        function pointerDown(e) {
+          e.preventDefault();
+          startX = e.touches ? e.touches[0].clientX : e.clientX;
+          startY = e.touches ? e.touches[0].clientY : e.clientY;
+          dragging = true;
+          rotating = e.shiftKey;
+          startState = { x: state.x, y: state.y, rot: state.rot };
+        }
+        function pointerMove(e) {
+          if (!dragging) return;
+          const cx = e.touches ? e.touches[0].clientX : e.clientX;
+          const cy = e.touches ? e.touches[0].clientY : e.clientY;
+          const dx = cx - startX;
+          const dy = cy - startY;
+          if (rotating) {
+            state.rot = startState.rot + dx * 0.2;
+            sliders.rotation.value = state.rot;
+          } else {
+            state.x = startState.x + dx;
+            state.y = startState.y + dy;
+            sliders.x.value = state.x;
+            sliders.y.value = state.y;
+          }
+          draw();
+          drawHome();
+        }
+        function pointerUp() {
+          dragging = false;
+          rotating = false;
+        }
+
+        document
+          .getElementById("stage")
+          .addEventListener("mousedown", pointerDown);
+        document
+          .getElementById("stage")
+          .addEventListener("touchstart", pointerDown, { passive: false });
+        window.addEventListener("mousemove", pointerMove, { passive: false });
+        window.addEventListener("touchmove", pointerMove, { passive: false });
+        window.addEventListener("mouseup", pointerUp);
+        window.addEventListener("touchend", pointerUp);
+
+        document.getElementById("stage").addEventListener(
+          "wheel",
+          (e) => {
+            e.preventDefault();
+            const d = Math.sign(e.deltaY);
+            state.scale = Math.min(
+              3,
+              Math.max(0.2, state.scale * (d > 0 ? 0.97 : 1.03))
+            );
+            sliders.scale.value = state.scale;
+            draw();
+            drawHome();
+          },
+          { passive: false }
+        );
+
+        window.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowLeft") {
+            state.x -= 2;
+          }
+          if (e.key === "ArrowRight") {
+            state.x += 2;
+          }
+          if (e.key === "ArrowUp") {
+            state.y -= 2;
+          }
+          if (e.key === "ArrowDown") {
+            state.y += 2;
+          }
+          if (e.key === "r" || e.key === "R") {
+            resetTransform();
+          }
+          if (
+            [
+              "ArrowLeft",
+              "ArrowRight",
+              "ArrowUp",
+              "ArrowDown",
+              "r",
+              "R",
+            ].includes(e.key)
+          ) {
+            sliders.x.value = state.x;
+            sliders.y.value = state.y;
+            draw();
+            drawHome();
+          }
+        });
+
+        sliders.scale.addEventListener("input", () => {
+          state.scale = +sliders.scale.value;
+          draw();
+          drawHome();
+        });
+        sliders.rotation.addEventListener("input", () => {
+          state.rot = +sliders.rotation.value;
+          draw();
+          drawHome();
+        });
+        sliders.x.addEventListener("input", () => {
+          state.x = +sliders.x.value;
+          draw();
+          drawHome();
+        });
+        sliders.y.addEventListener("input", () => {
+          state.y = +sliders.y.value;
+          draw();
+          drawHome();
+        });
+
+        function resetTransform() {
+          state.x = 0;
+          state.y = -120;
+          state.scale = 1;
+          state.rot = 0;
+          sliders.x.value = state.x;
+          sliders.y.value = state.y;
+          sliders.scale.value = state.scale;
+          sliders.rotation.value = state.rot;
+          draw();
+          drawHome();
+        }
+        document
+          .getElementById("resetBtn")
+          .addEventListener("click", resetTransform);
+
+        document.getElementById("exportBtn").addEventListener("click", () => {
+          if (!userImg || !hairImg) {
+            return toast("Add photo and hairstyle first");
+          }
+          const url = canvas.toDataURL("image/png");
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "stylemorph-hair.png";
+          a.click();
+        });
+
+        const LS_SAVED = "stylemorph_hair_saves";
+        function getSaves() {
+          try {
+            return JSON.parse(localStorage.getItem(LS_SAVED) || "[]");
+          } catch {
+            return [];
+          }
+        }
+        function setSaves(v) {
+          try {
+            localStorage.setItem(LS_SAVED, JSON.stringify(v));
+          } catch {}
+        }
+
+        document.getElementById("saveBtn").addEventListener("click", () => {
+          if (!userImg || !hairImg) {
+            return toast("Add photo and hairstyle first");
+          }
+          const thumb = canvas.toDataURL("image/png");
+          const entry = {
+            id: Date.now(),
+            thumb,
+            state: { ...state },
+            hairId:
+              HAIRS.find((h) => getHairDataURL(h) === hairImg.src)?.id || null,
+            user: true,
+          };
+          const all = getSaves();
+          all.unshift(entry);
+          setSaves(all);
+          renderSaved();
+          toast("Look saved");
+        });
+
+        function renderSaved() {
+          const grid = document.getElementById("savedGrid");
+          grid.innerHTML = "";
+          const all = getSaves();
+          all.forEach((s) => {
+            const card = document.createElement("div");
+            card.className = "gallery-item glass card";
+            const thumb = document.createElement("div");
+            thumb.className = "gallery-thumb";
+            const img = document.createElement("img");
+            img.src = s.thumb;
+            img.alt = "Saved look";
+            thumb.appendChild(img);
+            const meta = document.createElement("div");
+            meta.className = "gallery-meta";
+            meta.innerHTML = `<span>#${s.id}</span><button class='btn'>Load</button>`;
+            card.appendChild(thumb);
+            card.appendChild(meta);
+            meta.querySelector("button").addEventListener("click", async () => {
+              if (s.hairId) {
+                await setHairById(s.hairId);
+              }
+              Object.assign(state, s.state);
+              sliders.x.value = state.x;
+              sliders.y.value = state.y;
+              sliders.scale.value = state.scale;
+              sliders.rotation.value = state.rot;
+              draw();
+              drawHome();
+              location.hash = "#try";
+              toast("Loaded look");
+            });
+            grid.appendChild(card);
+          });
+        }
+        renderSaved();
+
+        /* ----------------------------- Profile ----------------------------- */
+        const nameEl = document.getElementById("name");
+        const headWEl = document.getElementById("headW");
+        const faceHEl = document.getElementById("faceH");
+        const prefEl = document.getElementById("pref");
+        const sizeHint = document.getElementById("sizeHint");
+        const LS_PROFILE = "stylemorph_hair_profile";
+        function getProfile() {
+          try {
+            return JSON.parse(localStorage.getItem(LS_PROFILE) || "{}");
+          } catch {
+            return {};
+          }
+        }
+        function setProfile(v) {
+          try {
+            localStorage.setItem(LS_PROFILE, JSON.stringify(v));
+          } catch {}
+        }
+
+        function loadProfile() {
+          const p = getProfile();
+          nameEl.value = p.name || "";
+          headWEl.value = p.headW || "";
+          faceHEl.value = p.faceH || "";
+          prefEl.value = p.pref || "Natural";
+          updateHint();
+        }
+        function updateHint() {
+          const headW = parseFloat(headWEl.value);
+          if (!isFinite(headW) || headW <= 0) {
+            sizeHint.textContent = "";
+            return;
+          }
+          const suggested = clamp(headW / 20, 0.6, 1.8);
+          sizeHint.textContent = `Suggested scale: ${suggested.toFixed(
+            2
+          )}× (based on head width)`;
+        }
+        function clamp(n, min, max) {
+          return Math.max(min, Math.min(max, n));
+        }
+
+        document.getElementById("saveProfile").addEventListener("click", () => {
+          const p = {
+            name: nameEl.value,
+            headW: headWEl.value,
+            faceH: faceHEl.value,
+            pref: prefEl.value,
+          };
+
+          setProfile(p);
+          toast("Profile saved");
+          updateHint();
+        });
+        [headWEl, faceHEl].forEach((el) =>
+          el.addEventListener("input", updateHint)
+        );
+        loadProfile();
+
+        /* -------------------------- Init Preview --------------------------- */
+        draw();
+        drawHome();
+      })();
+   // Navbar toggle for mobile
+document.getElementById("navToggle").addEventListener("click", () => {
+  document.getElementById("navLinks").classList.toggle("show");
+});
+
+    </script>
+  </body>
+</html>
